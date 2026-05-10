@@ -347,5 +347,16 @@ export default {
         <Spinner color-scheme="primary" size="" />
       </div>
     </section>
+
+    <footer class="mt-8 text-center">
+      <a
+        href="https://www.rysthdesign.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-xs text-n-slate-11 hover:text-n-brand transition-colors"
+      >
+        Powered by RysthDesign
+      </a>
+    </footer>
   </main>
 </template>
