@@ -1,66 +1,74 @@
-# Variables
-APP_NAME := chatwoot
-RAILS_ENV ?= development
+.PHONY: setup build up down logs clean db:prepare db:seed sync console
 
-# Targets
-setup:
-	gem install bundler
-	bundle install
-	pnpm install
+# Docker Compose
+DC = docker compose
 
-db_create:
-	RAILS_ENV=$(RAILS_ENV) bundle exec rails db:create
+# Default target
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-db_migrate:
-	RAILS_ENV=$(RAILS_ENV) bundle exec rails db:migrate
+setup: ## Initial setup (creates .env, builds images, prepares DB)
+	bash setup.sh
 
-db_seed:
-	RAILS_ENV=$(RAILS_ENV) bundle exec rails db:seed
+build: ## Build all Docker images (staged: base → rails/sidekiq/vite)
+	@echo "Building base image..."
+	$(DC) build base
+	@echo "Building dependent services..."
+	$(DC) build rails sidekiq vite
 
-db_reset:
-	RAILS_ENV=$(RAILS_ENV) bundle exec rails db:reset
+up: ## Start all services
+	$(DC) up -d
 
-db:
-	RAILS_ENV=$(RAILS_ENV) bundle exec rails db:chatwoot_prepare
+down: ## Stop all services
+	$(DC) down
 
-console:
-	RAILS_ENV=$(RAILS_ENV) bundle exec rails console
+restart: down up ## Restart all services
 
-server:
-	RAILS_ENV=$(RAILS_ENV) bundle exec rails server -b 0.0.0.0 -p 3000
+logs: ## Follow all logs
+	$(DC) logs -f
 
-burn:
-	bundle && pnpm install
+logs-rails: ## Follow Rails logs
+	$(DC) logs -f rails
 
-run:
-	@if [ -f ./.overmind.sock ]; then \
-		echo "Overmind is already running. Use 'make force_run' to start a new instance."; \
-	else \
-		overmind start -f Procfile.dev; \
-	fi
+logs-sidekiq: ## Follow Sidekiq logs
+	$(DC) logs -f sidekiq
 
-force_run:
-	@echo "Cleaning up Overmind processes..."
-	@lsof -ti:3036 2>/dev/null | xargs kill -9 2>/dev/null || true
-	@lsof -ti:3000 2>/dev/null | xargs kill -9 2>/dev/null || true
-	@rm -f ./.overmind.sock
-	@rm -f tmp/pids/*.pid
-	@echo "Cleanup complete"
-	overmind start -f Procfile.dev
+logs-vite: ## Follow Vite logs
+	$(DC) logs -f vite
 
-force_run_tunnel:
-	lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-	rm -f ./.overmind.sock
-	rm -f tmp/pids/*.pid
-	overmind start -f Procfile.tunnel
+clean: ## Stop and remove all containers and volumes
+	$(DC) down -v --remove-orphans
 
-debug:
-	overmind connect backend
+# Database
+db:prepare: ## Prepare database (migrations + seeds)
+	$(DC) exec -T rails bundle exec rails db:chatwoot_prepare
 
-debug_worker:
-	overmind connect worker
+db:seed: ## Run database seeds
+	$(DC) exec -T rails bundle exec rails db:seed
 
-docker: 
-	docker build -t $(APP_NAME) -f ./docker/Dockerfile .
+db:reset: ## Reset database
+	$(DC) exec -T rails bundle exec rails db:drop db:create db:migrate db:seed
 
-.PHONY: setup db_create db_migrate db_seed db_reset db console server burn docker run force_run force_run_tunnel debug debug_worker
+# Rails
+console: ## Open Rails console
+	$(DC) exec rails bundle exec rails console
+
+rails-task: ## Run a Rails task (usage: make rails-task TASK="db:migrate")
+	$(DC) exec -T rails bundle exec rails $(TASK)
+
+# Sync
+sync: ## Sync with upstream Chatwoot (optional: pass CLIENT_BRANCH=client/xyz)
+	bash sync-upstream.sh $(CLIENT_BRANCH)
+
+# Testing
+test-ruby: ## Run Ruby tests
+	$(DC) exec -T rails bundle exec rspec
+
+test-js: ## Run JavaScript tests
+	$(DC) exec -T rails pnpm test
+
+lint-ruby: ## Run Rubocop
+	$(DC) exec -T rails bundle exec rubocop -a
+
+lint-js: ## Run ESLint
+	$(DC) exec -T rails pnpm eslint
