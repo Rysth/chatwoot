@@ -350,12 +350,12 @@ export default {
 
     <footer class="mt-8 text-center">
       <a
-        href="https://www.rysthdesign.com"
+        :href="globalConfig.widgetBrandURL"
         target="_blank"
         rel="noopener noreferrer"
         class="text-xs text-n-slate-11 hover:text-n-brand transition-colors"
       >
-        Powered by RysthDesign
+        Powered by {{ globalConfig.brandName }}
       </a>
     </footer>
   </main>
