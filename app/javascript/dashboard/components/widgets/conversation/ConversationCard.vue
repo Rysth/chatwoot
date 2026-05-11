@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { getLastMessage } from 'dashboard/helper/conversationHelper';
+import { useMapGetter } from 'dashboard/composables/store';
 import Avatar from 'next/avatar/Avatar.vue';
 import MessagePreview from './MessagePreview.vue';
 import InboxName from '../InboxName.vue';
@@ -33,6 +34,15 @@ const emit = defineEmits([
 ]);
 
 const hovered = ref(false);
+
+const accountLabels = useMapGetter('labels/getLabels');
+
+const firstLabelColor = computed(() => {
+  const titles = props.chat.labels || [];
+  if (!titles.length) return null;
+  const label = accountLabels.value.find(l => l.title === titles[0]);
+  return label?.color || null;
+});
 
 const unreadCount = computed(() => props.chat.unread_count);
 const hasUnread = computed(() => unreadCount.value > 0);
@@ -110,6 +120,9 @@ watch(
       'px-0': compact,
       'px-3': !compact,
     }"
+    :style="
+      firstLabelColor ? { borderLeft: `3px solid ${firstLabelColor}` } : {}
+    "
     @click="$emit('click', $event)"
     @contextmenu="$emit('contextmenu', $event)"
   >

@@ -57,6 +57,13 @@ const lastActivityAt = computed(() => {
   return timestamp ? shortTimestamp(dynamicTime(timestamp)) : '';
 });
 
+const firstLabelColor = computed(() => {
+  const titles = props.conversation.labels || [];
+  if (!titles.length) return null;
+  const label = props.accountLabels.find(l => l.title === titles[0]);
+  return label?.color || null;
+});
+
 const showMessagePreviewWithoutMeta = computed(() => {
   const { labels = [] } = props.conversation;
   return (
@@ -88,6 +95,9 @@ const onCardClick = e => {
   <div
     role="button"
     class="flex w-full gap-3 px-3 py-4 transition-all duration-300 ease-in-out cursor-pointer"
+    :style="
+      firstLabelColor ? { borderLeft: `3px solid ${firstLabelColor}` } : {}
+    "
     @click="onCardClick"
   >
     <Avatar
