@@ -1,6 +1,11 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Skip linting if running in Docker-only workflow (no host node_modules)
+if [ ! -x "$(dirname "$0")/../node_modules/.bin/lint-staged" ]; then
+  exit 0
+fi
+
 # lint js and vue files
 npx --no-install lint-staged
 

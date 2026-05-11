@@ -52,9 +52,15 @@ echo -e "${YELLOW}Step 2: Cleaning up previous Docker containers and volumes...$
 docker compose down -v --remove-orphans || true
 echo -e "${GREEN}Cleanup complete.${NC}"
 
-# Step 3: Build and start services
-echo -e "${YELLOW}Step 3: Building and starting Docker services...${NC}"
-docker compose up --build -d
+# Step 3: Build base image first, then dependent services
+echo -e "${YELLOW}Step 3: Building base Docker image...${NC}"
+docker compose build base
+
+echo -e "${YELLOW}Step 3b: Building dependent services...${NC}"
+docker compose build rails sidekiq vite
+
+echo -e "${YELLOW}Step 3c: Starting Docker services...${NC}"
+docker compose up -d
 
 # Step 4: Wait for services to be healthy
 echo -e "${YELLOW}Step 4: Waiting for services to be ready...${NC}"
