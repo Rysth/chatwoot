@@ -1,139 +1,261 @@
-<img src="./.github/screenshots/header.png#gh-light-mode-only" width="100%" alt="Header light mode"/>
-<img src="./.github/screenshots/header-dark.png#gh-dark-mode-only" width="100%" alt="Header dark mode"/>
+# Chatwoot — Plataforma de Soporte al Cliente para PyMes
 
-___
+Fork del proyecto [Chatwoot](https://github.com/chatwoot/chatwoot) optimizado para pequeños negocios que buscan centralizar sus interacciones en redes sociales, email y chat en un solo lugar.
 
-# Chatwoot
-
-The modern customer support platform, an open-source alternative to Intercom, Zendesk, Salesforce Service Cloud etc.
-
-<p>
-  <img src="https://img.shields.io/circleci/build/github/chatwoot/chatwoot" alt="CircleCI Badge">
-    <a href="https://hub.docker.com/r/chatwoot/chatwoot/"><img src="https://img.shields.io/docker/pulls/chatwoot/chatwoot" alt="Docker Pull Badge"></a>
-  <a href="https://hub.docker.com/r/chatwoot/chatwoot/"><img src="https://img.shields.io/docker/cloud/build/chatwoot/chatwoot" alt="Docker Build Badge"></a>
-  <img src="https://img.shields.io/github/commit-activity/m/chatwoot/chatwoot" alt="Commits-per-month">
-  <a title="Crowdin" target="_self" href="https://chatwoot.crowdin.com/chatwoot"><img src="https://badges.crowdin.net/e/37ced7eba411064bd792feb3b7a28b16/localized.svg"></a>
-  <a href="https://discord.gg/cJXdrwS"><img src="https://img.shields.io/discord/647412545203994635" alt="Discord"></a>
-  <a href="https://status.chatwoot.com"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fchatwoot%2Fstatus%2Fmaster%2Fapi%2Fchatwoot%2Fuptime.json" alt="uptime"></a>
-  <a href="https://status.chatwoot.com"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fchatwoot%2Fstatus%2Fmaster%2Fapi%2Fchatwoot%2Fresponse-time.json" alt="response time"></a>
-  <a href="https://artifacthub.io/packages/helm/chatwoot/chatwoot"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/artifact-hub" alt="Artifact HUB"></a>
-</p>
-
-
-<p>
-  <a href="https://heroku.com/deploy?template=https://github.com/chatwoot/chatwoot/tree/master" alt="Deploy to Heroku">
-     <img width="150" alt="Deploy" src="https://www.herokucdn.com/deploy/button.svg"/>
-  </a>
-  <a href="https://marketplace.digitalocean.com/apps/chatwoot?refcode=f2238426a2a8" alt="Deploy to DigitalOcean">
-     <img width="200" alt="Deploy to DO" src="https://www.deploytodo.com/do-btn-blue.svg"/>
-  </a>
-</p>
-
-<img src="./.github/screenshots/dashboard.png#gh-light-mode-only" width="100%" alt="Chat dashboard dark mode"/>
-<img src="./.github/screenshots/dashboard-dark.png#gh-dark-mode-only" width="100%" alt="Chat dashboard"/>
+Este repositorio sigue el modelo **single-tenant por cliente** sobre una base `multi-tenant-ready`, permitiendo personalizar branding, permisos y flujos de trabajo por cuenta sin contaminación cruzada.
 
 ---
 
-Chatwoot is the modern, open-source, and self-hosted customer support platform designed to help businesses deliver exceptional customer support experience. Built for scale and flexibility, Chatwoot gives you full control over your customer data while providing powerful tools to manage conversations across channels.
+## ¿Qué es este proyecto?
 
-### ✨ Captain – AI Agent for Support
+Chatwoot es una plataforma open-source de soporte al cliente. Este fork la adapta específicamente para **PyMes y agencias digitales** que necesitan:
 
-Supercharge your support with Captain, Chatwoot’s AI agent. Captain helps automate responses, handle common queries, and reduce agent workload—ensuring customers get instant, accurate answers. With Captain, your team can focus on complex conversations while routine questions are resolved automatically. Read more about Captain [here](https://chwt.app/captain-docs).
+- Centralizar conversaciones de WhatsApp, Instagram, Facebook Messenger, email y web chat.
+- Asignación automática (round-robin) de conversaciones a agentes.
+- Control de permisos granular: los agentes solo ven sus conversaciones, mientras los administradores tienen visibilidad total.
+- Branding blanco totalmente personalizable por cliente.
+- Despliegue sencillo vía Docker y Dokploy.
 
-### 💬 Omnichannel Support Desk
+---
 
-Chatwoot centralizes all customer conversations into one powerful inbox, no matter where your customers reach out from. It supports live chat on your website, email, Facebook, Instagram, Twitter, WhatsApp, Telegram, Line, SMS etc.
+## Arquitectura Multi-tenant (Single-tenant por Cliente)
 
-### 📚 Help center portal
+Cada cliente tiene su propia rama y su propia imagen Docker. No se comparten datos ni configuraciones entre clientes.
 
-Publish help articles, FAQs, and guides through the built-in Help Center Portal. Enable customers to find answers on their own, reduce repetitive queries, and keep your support team focused on more complex issues.
+```
+upstream/chatwoot  →  origin/develop  →  client/<nombre-cliente>
+```
 
-### 🗂️ Other features
+### Flujo de ramas
 
-#### Collaboration & Productivity
+| Rama | Propósito |
+|------|-----------|
+| `develop` | Base sincronizada con upstream. Acumula mejoras comunes. |
+| `client/<nombre>` | Personalización de branding, colores y permisos para un cliente específico. |
 
-- Private Notes and @mentions for internal team discussions.
-- Labels to organize and categorize conversations.
-- Keyboard Shortcuts and a Command Bar for quick navigation.
-- Canned Responses to reply faster to frequently asked questions.
-- Auto-Assignment to route conversations based on agent availability.
-- Multi-lingual Support to serve customers in multiple languages.
-- Custom Views and Filters for better inbox organization.
-- Business Hours and Auto-Responders to manage response expectations.
-- Teams and Automation tools for scaling support workflows.
-- Agent Capacity Management to balance workload across the team.
+### Sincronizar con upstream
 
-#### Customer Data & Segmentation
-- Contact Management with profiles and interaction history.
-- Contact Segments and Notes for targeted communication.
-- Campaigns to proactively engage customers.
-- Custom Attributes for storing additional customer data.
-- Pre-Chat Forms to collect user information before starting conversations.
+```bash
+git checkout develop
+git fetch upstream
+git merge upstream/develop --no-edit
+git push origin develop
+```
 
-#### Integrations
-- Slack Integration to manage conversations directly from Slack.
-- Dialogflow Integration for chatbot automation.
-- Dashboard Apps to embed internal tools within Chatwoot.
-- Shopify Integration to view and manage customer orders right within Chatwoot.
-- Use Google Translate to translate messages from your customers in realtime.
-- Create and manage Linear tickets within Chatwoot.
+### Crear nuevo cliente
 
-#### Reports & Insights
-- Live View of ongoing conversations for real-time monitoring.
-- Conversation, Agent, Inbox, Label, and Team Reports for operational visibility.
-- CSAT Reports to measure customer satisfaction.
-- Downloadable Reports for offline analysis and reporting.
+```bash
+git checkout develop
+git checkout -b client/acme-corp
+# Editar branding (ver Fase 2)
+git add . && git commit -m "chore: setup branding for acme-corp"
+git push origin client/acme-corp
+```
 
+---
 
-## Documentation
+## Desarrollo Local
 
-Detailed documentation is available at [chatwoot.com/help-center](https://www.chatwoot.com/help-center).
+### Requisitos
 
-## Translation process
+- Docker + Docker Compose
+- Git
 
-The translation process for Chatwoot web and mobile app is managed at [https://translate.chatwoot.com](https://translate.chatwoot.com) using Crowdin. Please read the [translation guide](https://www.chatwoot.com/docs/contributing/translating-chatwoot-to-your-language) for contributing to Chatwoot.
+### Levantar el entorno
 
-## Branching model
+```bash
+# Primera vez o reset completo
+./setup.sh
 
-We use the [git-flow](https://nvie.com/posts/a-successful-git-branching-model/) branching model. The base branch is `develop`.
-If you are looking for a stable version, please use the `master` or tags labelled as `v1.x.x`.
+# Inicio rápido (usa imágenes existentes, conserva datos)
+./setup.sh --skip-build
 
-## Deployment
+# Reset total (DESTRUYE la base de datos)
+./setup.sh --reset
+```
 
-### Heroku one-click deploy
+### Acceso
 
-Deploying Chatwoot to Heroku is a breeze. It's as simple as clicking this button:
+- **Aplicación:** http://localhost:3000
+- **MailHog (emails de prueba):** http://localhost:8025
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/chatwoot/chatwoot/tree/master)
+### Credenciales de prueba (seed)
 
-Follow this [link](https://www.chatwoot.com/docs/environment-variables) to understand setting the correct environment variables for the app to work with all the features. There might be breakages if you do not set the relevant environment variables.
+Tras ejecutar `docker compose exec rails bundle exec rails db:seed`:
 
+- **Email:** `john@acme.inc`
+- **Password:** `Password1!`
 
-### DigitalOcean 1-Click Kubernetes deployment
+---
 
-Chatwoot now supports 1-Click deployment to DigitalOcean as a kubernetes app.
+## Personalización de Marca (Branding)
 
-<a href="https://marketplace.digitalocean.com/apps/chatwoot?refcode=f2238426a2a8" alt="Deploy to DigitalOcean">
-  <img width="200" alt="Deploy to DO" src="https://www.deploytodo.com/do-btn-blue.svg"/>
-</a>
+### 1. Nombre de instalación
 
-### Other deployment options
+Editar `config/installation_config.yml`:
 
-For other supported options, checkout our [deployment page](https://chatwoot.com/deploy).
+```yaml
+- name: INSTALLATION_NAME
+  value: 'Nombre del Cliente'
+```
 
-## Security
+El UI reemplaza automáticamente "Chatwoot" mediante `replaceInstallationName`.
 
-Looking to report a vulnerability? Please refer our [SECURITY.md](./SECURITY.md) file.
+### 2. Logos
 
-## Community
+| Archivo | Ubicación |
+|---------|-----------|
+| Logo claro | `public/brand-assets/logo.svg` |
+| Logo oscuro | `public/brand-assets/logo_dark.svg` |
+| Favicon | `public/brand-assets/logo_thumbnail.svg` |
+| Widget chat | `app/javascript/widget/assets/images/logo.svg` |
+| Captain (AI) | `public/assets/images/dashboard/captain/logo.svg` |
 
-If you need help or just want to hang out, come, say hi on our [Discord](https://discord.gg/cJXdrwS) server.
+### 3. Colores
 
-## Contributors
+Editar `theme/colors.js` → `colors.woot` para cambiar la paleta principal. Para cambios amplios, modificar `tailwind.config.js`.
 
-Thanks goes to all these [wonderful people](https://www.chatwoot.com/docs/contributors):
+### 4. URLs y términos
 
-<a href="https://github.com/chatwoot/chatwoot/graphs/contributors"><img src="https://opencollective.com/chatwoot/contributors.svg?width=890&button=false" /></a>
+```yaml
+# config/installation_config.yml
+- name: BRAND_URL
+  value: 'https://www.cliente.com'
+- name: BRAND_NAME
+  value: 'Nombre Cliente'
+- name: TERMS_URL
+  value: 'https://www.cliente.com/terms'
+- name: PRIVACY_URL
+  value: 'https://www.cliente.com/privacy'
+```
 
+---
 
-*Chatwoot* &copy; 2017-2026, Chatwoot Inc - Released under the MIT License.
+## Build y Registro
+
+### Construir imagen
+
+```bash
+docker build -f docker/Dockerfile \
+  --build-arg RAILS_ENV=production \
+  -t <dockerhub-user>/chatwoot-<cliente>:<tag> .
+```
+
+### Push a Docker Hub
+
+```bash
+docker push <dockerhub-user>/chatwoot-<cliente>:<tag>
+```
+
+### Tags recomendados
+
+| Tag | Uso |
+|-----|-----|
+| `v1.0.0` | Release inicial del cliente |
+| `v1.1.0` | Post-merge con upstream |
+| `latest` | Última estable (opcional) |
+
+---
+
+## Despliegue con Dokploy
+
+1. Crear servicio → **Image-based deployment**
+2. Image: `<dockerhub-user>/chatwoot-<cliente>:<tag>`
+3. Port: `3000`
+4. Variables de entorno mínimas:
+
+```env
+RAILS_ENV=production
+SECRET_KEY_BASE=<generar con openssl rand -hex 64>
+POSTGRES_HOST=<host>
+POSTGRES_DATABASE=<db_cliente>
+POSTGRES_USERNAME=<user>
+POSTGRES_PASSWORD=<password>
+REDIS_URL=redis://<host>:6379
+INSTALLATION_NAME=<Nombre Cliente>
+FRONTEND_URL=https://<dominio-cliente.com>
+```
+
+### Actualización desde upstream
+
+```bash
+# 1. Sincronizar develop
+git checkout develop && git fetch upstream && git merge upstream/develop --no-edit && git push origin develop
+
+# 2. Merge a rama del cliente
+git checkout client/<nombre-cliente>
+git merge develop --no-edit
+
+# 3. Revisar branding intacto
+# 4. Rebuild + docker push
+# 5. Actualizar tag en Dokploy
+```
+
+---
+
+## Funcionalidades Clave
+
+### Omnichannel
+- Web chat, email, Facebook, Instagram, Twitter, WhatsApp, Telegram, SMS.
+
+### Gestión de Conversaciones
+- **Asignación automática (round-robin)** según disponibilidad de agentes.
+- **Vistas filtradas por permisos:** los agentes normales solo ven "Mías", los administradores ven "Sin asignar" y "Todos".
+- **Acciones masivas:** solo administradores pueden reasignar agentes en bloque.
+- **Coloración visual:** las tarjetas de conversación toman un tinte sutil del color de la primera etiqueta para mejorar la navegación.
+
+### Colaboración
+- Notas privadas, @mentions, etiquetas, respuestas enlatadas.
+- Atajos de teclado y Command Bar.
+
+### Inteligencia Artificial
+- **Captain:** agente de IA integrado para automatizar respuestas y reducir carga operativa.
+
+### Centro de Ayuda
+- Portal de artículos y FAQs para autoservicio del cliente.
+
+### Reportes
+- Conversaciones, agentes, equipos, etiquetas, satisfacción (CSAT).
+
+---
+
+## Checklist: Nuevo Cliente de Inicio a Fin
+
+```bash
+# 1. Sincronizar develop
+git checkout develop && git fetch upstream && git merge upstream/develop --no-edit
+
+# 2. Crear rama del cliente
+git checkout -b client/<nombre-cliente>
+
+# 3. Personalizar branding (logos, colors.js, installation_config.yml)
+
+# 4. Commit
+git add . && git commit -m "chore: setup branding for <nombre-cliente>"
+
+# 5. Build
+docker build -f docker/Dockerfile --build-arg RAILS_ENV=production -t <user>/chatwoot-<cliente>:v1.0.0 .
+
+# 6. Push image
+docker push <user>/chatwoot-<cliente>:v1.0.0
+
+# 7. Deploy en Dokploy (image-based, configurar env vars)
+```
+
+---
+
+## Documentación y Comunidad
+
+- Documentación oficial de Chatwoot: [chatwoot.com/help-center](https://www.chatwoot.com/help-center)
+- Traducciones: [translate.chatwoot.com](https://translate.chatwoot.com)
+- Discord original: [discord.gg/cJXdrwS](https://discord.gg/cJXdrwS)
+
+---
+
+## Licencia
+
+Este fork mantiene la licencia **MIT** del proyecto original Chatwoot.
+
+*Chatwoot* &copy; 2017-2026, Chatwoot Inc — Released under the MIT License.
+
+Adaptaciones y personalización para PyMes por [Rysth Design](https://github.com/Rysth).
