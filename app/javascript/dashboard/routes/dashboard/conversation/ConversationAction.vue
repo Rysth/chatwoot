@@ -3,6 +3,7 @@
 import { mapGetters } from 'vuex';
 import { useAlert } from 'dashboard/composables';
 import { useAgentsList } from 'dashboard/composables/useAgentsList';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 import ContactDetailsItem from './ContactDetailsItem.vue';
 import MultiselectDropdown from 'shared/components/ui/MultiselectDropdown.vue';
 import ConversationLabels from './labels/LabelBox.vue';
@@ -26,8 +27,10 @@ export default {
   },
   setup() {
     const { agentsList } = useAgentsList();
+    const { isAdmin } = useAdmin();
     return {
       agentsList,
+      isAdmin,
     };
   },
   data() {
@@ -220,7 +223,7 @@ export default {
       >
         <template #button>
           <NextButton
-            v-if="showSelfAssign"
+            v-if="showSelfAssign && isAdmin"
             link
             xs
             icon="i-lucide-arrow-right"
@@ -231,6 +234,7 @@ export default {
         </template>
       </ContactDetailsItem>
       <MultiselectDropdown
+        v-if="isAdmin"
         :options="agentsList"
         :selected-item="assignedAgent"
         :multiselector-title="$t('AGENT_MGMT.MULTI_SELECTOR.TITLE.AGENT')"
@@ -243,6 +247,13 @@ export default {
         "
         @select="onClickAssignAgent"
       />
+      <div
+        v-else
+        class="flex items-center gap-2 px-2 py-1.5 text-sm text-n-slate-12"
+      >
+        <fluent-icon icon="person" size="14" class="text-n-slate-11" />
+        {{ assignedAgent?.name || $t('AGENT_MGMT.MULTI_SELECTOR.PLACEHOLDER') }}
+      </div>
     </div>
     <div>
       <ContactDetailsItem

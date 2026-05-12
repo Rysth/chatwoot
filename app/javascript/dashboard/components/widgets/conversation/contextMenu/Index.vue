@@ -352,7 +352,7 @@ export default {
         />
       </MenuItemWithSubmenu>
       <MenuItemWithSubmenu
-        v-if="isAllowed([MENU.AGENT])"
+        v-if="isAdmin && isAllowed([MENU.AGENT])"
         :option="agentMenuConfig"
         :sub-menu-available="!!assignableAgents.length"
       >

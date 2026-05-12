@@ -1,6 +1,7 @@
 <script setup>
 import { computed, useTemplateRef } from 'vue';
 import { getLastMessage } from 'dashboard/helper/conversationHelper';
+import { useMapGetter } from 'dashboard/composables/store';
 import CardAvatar from './CardAvatar.vue';
 import CardContent from './CardContent.vue';
 import CardLabels from './CardLabelsV5.vue';
@@ -48,6 +49,15 @@ const voiceCallData = computed(() => {
 
 const unreadCount = computed(() => props.chat.unread_count);
 
+const accountLabels = useMapGetter('labels/getLabels');
+
+const firstLabelColor = computed(() => {
+  const titles = props.chat.labels || [];
+  if (!titles.length) return null;
+  const label = accountLabels.value.find(l => l.title === titles[0]);
+  return label?.color || null;
+});
+
 const slaCardLabel = useTemplateRef('slaCardLabel');
 
 const hasSlaPolicyId = computed(
@@ -77,6 +87,14 @@ const selectedModel = computed({
       'grid-cols-[minmax(0,2fr)_minmax(0,1fr)]': showLabelsSection,
       'grid-cols-[minmax(0,2fr)_max-content]': !showLabelsSection,
     }"
+    :style="
+      firstLabelColor
+        ? {
+            borderLeft: `3px solid ${firstLabelColor}`,
+            backgroundColor: `${firstLabelColor}0D`,
+          }
+        : {}
+    "
     @click="$emit('click', $event)"
     @contextmenu="$emit('contextmenu', $event)"
   >
