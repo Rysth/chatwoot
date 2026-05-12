@@ -96,7 +96,12 @@ const onCardClick = e => {
     role="button"
     class="flex w-full gap-3 px-3 py-4 transition-all duration-300 ease-in-out cursor-pointer"
     :style="
-      firstLabelColor ? { borderLeft: `3px solid ${firstLabelColor}` } : {}
+      firstLabelColor
+        ? {
+            borderLeft: `3px solid ${firstLabelColor}`,
+            backgroundColor: `${firstLabelColor}0D`,
+          }
+        : {}
     "
     @click="onCardClick"
   >

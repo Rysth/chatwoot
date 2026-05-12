@@ -121,7 +121,12 @@ watch(
       'px-3': !compact,
     }"
     :style="
-      firstLabelColor ? { borderLeft: `3px solid ${firstLabelColor}` } : {}
+      firstLabelColor
+        ? {
+            borderLeft: `3px solid ${firstLabelColor}`,
+            backgroundColor: `${firstLabelColor}0D`,
+          }
+        : {}
     "
     @click="$emit('click', $event)"
     @contextmenu="$emit('contextmenu', $event)"

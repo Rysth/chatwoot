@@ -75,6 +75,8 @@ if [ ! -f .env ]; then
   sed -i 's/^POSTGRES_HOST=.*/POSTGRES_HOST=postgres/' .env
   sed -i 's/^POSTGRES_USERNAME=.*/POSTGRES_USERNAME=postgres/' .env
   sed -i 's/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=postgres/' .env
+  sed -i 's/^# POSTGRES_DATABASE=.*/POSTGRES_DATABASE=chatwoot/' .env
+  sed -i 's/^POSTGRES_DATABASE=.*/POSTGRES_DATABASE=chatwoot/' .env
   sed -i 's/^REDIS_URL=.*/REDIS_URL=redis:\/\/redis:6379/' .env
   sed -i 's/^REDIS_PASSWORD=.*/REDIS_PASSWORD=/' .env
   sed -i 's/^RAILS_ENV=.*/RAILS_ENV=development/' .env

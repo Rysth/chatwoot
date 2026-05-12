@@ -88,7 +88,12 @@ const selectedModel = computed({
       'grid-cols-[minmax(0,2fr)_max-content]': !showLabelsSection,
     }"
     :style="
-      firstLabelColor ? { borderLeft: `3px solid ${firstLabelColor}` } : {}
+      firstLabelColor
+        ? {
+            borderLeft: `3px solid ${firstLabelColor}`,
+            backgroundColor: `${firstLabelColor}0D`,
+          }
+        : {}
     "
     @click="$emit('click', $event)"
     @contextmenu="$emit('contextmenu', $event)"
