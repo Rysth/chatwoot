@@ -4,6 +4,7 @@ import { getUnixTime } from 'date-fns';
 import { findSnoozeTime } from 'dashboard/helper/snoozeHelpers';
 import { emitter } from 'shared/helpers/mitt';
 import { useBulkActions } from 'dashboard/composables/chatlist/useBulkActions.js';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 import wootConstants from 'dashboard/constants/globals';
 import {
   CMD_BULK_ACTION_SNOOZE_CONVERSATION,
@@ -53,6 +54,8 @@ defineOptions({
 });
 
 const attrs = useAttrs();
+
+const { isAdmin } = useAdmin();
 
 const {
   onAssignAgent,
@@ -168,6 +171,7 @@ onUnmounted(() => {
             @update="onUpdateConversations"
           />
           <BulkAgentActions
+            v-if="isAdmin"
             :selected-inboxes="selectedInboxes"
             :conversation-count="conversations.length"
             @select="onAssignAgent"
