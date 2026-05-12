@@ -1,6 +1,37 @@
 #!/bin/bash
 set -e
 
+RESET_MODE=false
+SKIP_BUILD=false
+
+# Parse arguments
+for arg in "$@"; do
+  case $arg in
+    --reset)
+      RESET_MODE=true
+      shift
+      ;;
+    --skip-build)
+      SKIP_BUILD=true
+      shift
+      ;;
+    --help|-h)
+      echo "Usage: $0 [OPTIONS]"
+      echo ""
+      echo "Options:"
+      echo "  --reset        Destroy all volumes and rebuild from scratch (DESTROYS DATA)"
+      echo "  --skip-build   Skip Docker image build (fast start, uses existing images)"
+      echo "  --help, -h     Show this help message"
+      echo ""
+      echo "Default behavior (no flags):"
+      echo "  - Keeps existing database and volumes"
+      echo "  - Rebuilds images only if Dockerfile or dependencies changed"
+      echo "  - Starts containers with existing data"
+      exit 0
+      ;;
+  esac
+done
+
 echo "========================================"
 echo "Chatwoot Docker Local Setup Script"
 echo "========================================"
@@ -10,6 +41,21 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# Show mode info
+if [ "$RESET_MODE" = true ]; then
+  echo -e "${RED}⚠️  RESET MODE ENABLED${NC}"
+  echo -e "${RED}This will DESTROY all Docker volumes including your database!${NC}"
+  read -p "Are you sure? (type 'yes' to continue): " confirm
+  if [ "$confirm" != "yes" ]; then
+    echo -e "${YELLOW}Reset cancelled.${NC}"
+    exit 0
+  fi
+fi
+
+if [ "$SKIP_BUILD" = true ]; then
+  echo -e "${YELLOW}⏩ SKIP BUILD MODE: Using existing Docker images${NC}"
+fi
 
 # Step 1: Check if .env exists, if not create from example
 if [ ! -f .env ]; then
@@ -47,23 +93,39 @@ if ! grep -q "POSTGRES_HOST_AUTH_METHOD=trust" docker-compose.yaml; then
   echo -e "${GREEN}PostgreSQL auth config added.${NC}"
 fi
 
-# Step 2: Clean up previous containers and volumes
-echo -e "${YELLOW}Step 2: Cleaning up previous Docker containers and volumes...${NC}"
-docker compose down -v --remove-orphans || true
-echo -e "${GREEN}Cleanup complete.${NC}"
+# Step 2: Clean up (conditional on reset mode)
+if [ "$RESET_MODE" = true ]; then
+  echo -e "${YELLOW}Step 2: DESTROYING all Docker containers and volumes (RESET MODE)...${NC}"
+  docker compose down -v --remove-orphans || true
+  echo -e "${GREEN}Cleanup complete. All data has been destroyed.${NC}"
+else
+  echo -e "${YELLOW}Step 2: Stopping existing containers (preserving volumes)...${NC}"
+  docker compose down --remove-orphans || true
+  echo -e "${GREEN}Containers stopped. Volumes preserved.${NC}"
+fi
 
-# Step 3: Build base image first, then dependent services
-echo -e "${YELLOW}Step 3: Building base Docker image...${NC}"
-docker compose build base
+# Step 3: Build images (conditional)
+if [ "$SKIP_BUILD" = true ]; then
+  echo -e "${YELLOW}Step 3: Skipping image build (--skip-build flag set)${NC}"
+elif [ "$RESET_MODE" = true ]; then
+  echo -e "${YELLOW}Step 3: Building base Docker image (RESET MODE)...${NC}"
+  docker compose build base
 
-echo -e "${YELLOW}Step 3b: Building dependent services...${NC}"
-docker compose build rails sidekiq vite
+  echo -e "${YELLOW}Step 3b: Building dependent services...${NC}"
+  docker compose build rails sidekiq vite
+else
+  echo -e "${YELLOW}Step 3: Building images only if needed...${NC}"
+  # Build without cache only if no images exist, otherwise let Docker decide
+  docker compose build base
+  docker compose build rails sidekiq vite
+fi
 
-echo -e "${YELLOW}Step 3c: Starting Docker services...${NC}"
+# Step 4: Start services
+echo -e "${YELLOW}Step 4: Starting Docker services...${NC}"
 docker compose up -d
 
-# Step 4: Wait for services to be healthy
-echo -e "${YELLOW}Step 4: Waiting for services to be ready...${NC}"
+# Step 5: Wait for services to be healthy
+echo -e "${YELLOW}Step 5: Waiting for services to be ready...${NC}"
 sleep 15
 
 # Wait for postgres specifically
@@ -74,13 +136,19 @@ until docker compose exec -T postgres pg_isready -U postgres > /dev/null 2>&1; d
 done
 echo -e "${GREEN}PostgreSQL is ready!${NC}"
 
-# Step 5: Prepare database
-echo -e "${YELLOW}Step 5: Preparing database (schema, seeds, migrations)...${NC}"
-docker compose exec -T rails bundle exec rails db:chatwoot_prepare
-echo -e "${GREEN}Database prepared successfully!${NC}"
+# Step 6: Prepare database (only on first run or reset)
+if [ "$RESET_MODE" = true ] || ! docker compose exec -T postgres psql -U postgres -d chatwoot -c "SELECT 1 FROM installation_configs LIMIT 1;" > /dev/null 2>&1; then
+  echo -e "${YELLOW}Step 6: Preparing database (schema, seeds, migrations)...${NC}"
+  docker compose exec -T rails bundle exec rails db:chatwoot_prepare
+  echo -e "${GREEN}Database prepared successfully!${NC}"
+else
+  echo -e "${GREEN}Step 6: Database already exists, skipping db:chatwoot_prepare${NC}"
+  echo -e "${YELLOW}Running migrations only...${NC}"
+  docker compose exec -T rails bundle exec rails db:migrate || true
+fi
 
-# Step 6: Verify branding
-echo -e "${YELLOW}Step 6: Verifying installation configuration...${NC}"
+# Step 7: Verify branding
+echo -e "${YELLOW}Step 7: Verifying installation configuration...${NC}"
 docker compose exec -T rails bundle exec rails runner "
   config = InstallationConfig.find_by(name: 'INSTALLATION_NAME')
   if config
@@ -115,4 +183,8 @@ echo "  docker compose logs -f rails    # View Rails logs"
 echo "  docker compose logs -f sidekiq  # View Sidekiq logs"
 echo "  docker compose logs -f vite     # View Vite logs"
 echo "  docker compose exec rails bundle exec rails console  # Rails console"
+echo ""
+echo "Next time, just run:"
+echo "  ./setup.sh --skip-build         # Fast start (keeps data)"
+echo "  ./setup.sh --reset              # Full reset (DESTROYS data)"
 echo ""
